@@ -27,7 +27,7 @@ const weatherIconMap = {
 
 function getIconFilename(condition) {
   let cond = condition.toLowerCase().replace(/\s+/g, '-');
-  return `svg/wi-${cond}.svg`;
+  return `wi-${cond}.svg`;  // icons directly in main folder
 }
 
 // Wave height estimation (meters)
