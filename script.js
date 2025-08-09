@@ -1,4 +1,4 @@
-const API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY';  // <-- Put your real API key here
+const API_KEY = 'd338f2ea5a1de663c27511de8ac24545';  // <-- Put your real API key here
 
 const beaches = [
   { id: 1, name: "Martil", lat: 35.621, lon: -5.275 },
@@ -27,7 +27,7 @@ const weatherIconMap = {
 
 function getIconFilename(condition) {
   let cond = condition.toLowerCase().replace(/\s+/g, '-');
-  return `wi-${cond}.svg`;  // icons directly in main folder
+  return `svg/wi-${cond}.svg`;
 }
 
 // Wave height estimation (meters)
