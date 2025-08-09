@@ -1,89 +1,182 @@
-const apiKey = "d338f2ea5a1de663c27511de8ac24545";
+const API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY';  // <-- Put your real API key here
 
 const beaches = [
-    { name: "Martil Center", lat: 35.6241, lon: -5.2756 },
-    { name: "Cabo Negro", lat: 35.6633, lon: -5.3208 },
-    { name: "M'Diq", lat: 35.6826, lon: -5.3193 },
-    { name: "Azla Beach", lat: 35.5513, lon: -5.2890 },
-    { name: "Essaouira Beach", lat: 31.513, lon: -9.769 },
-    { name: "Agadir Beach", lat: 30.4215, lon: -9.597 },
-    { name: "Saïdia Beach", lat: 35.088, lon: -2.264 },
-    { name: "Taghazout Beach", lat: 30.542, lon: -9.708 },
-    { name: "Oualidia Beach", lat: 32.732, lon: -9.033 },
+  { id: 1, name: "Martil", lat: 35.621, lon: -5.275 },
+  { id: 2, name: "Capo Negro", lat: 35.671, lon: -5.355 },
+  { id: 3, name: "M'diq", lat: 35.680, lon: -5.319 },
+  { id: 4, name: "Tamuda Bay", lat: 35.692, lon: -5.327 }
 ];
 
-const beachContainer = document.getElementById("beachContainer");
-const popup = document.getElementById("popup");
-const closePopup = document.getElementById("closePopup");
-const popupBeachName = document.getElementById("popupBeachName");
-const popupWeather = document.getElementById("popupWeather");
-const popupWind = document.getElementById("popupWind");
-const popupHumidity = document.createElement("p");
-const popupVerdict = document.getElementById("popupVerdict");
+const weatherIconMap = {
+  'Clear': 'sunny',
+  'Clouds': 'cloud',
+  'Rain': 'rain',
+  'Drizzle': 'rain-drop',
+  'Thunderstorm': 'tornado',
+  'Snow': 'snow',
+  'Mist': 'fog',
+  'Smoke': 'fog',
+  'Haze': 'fog',
+  'Dust': 'fog',
+  'Fog': 'fog',
+  'Sand': 'fog',
+  'Ash': 'fog',
+  'Squall': 'tornado',
+  'Tornado': 'tornado'
+};
 
-// Insert humidity paragraph before verdict in popup
-document.querySelector(".popup-content").insertBefore(popupHumidity, popupVerdict);
-
-async function fetchWeather(beach) {
-    try {
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${beach.lat}&lon=${beach.lon}&appid=${apiKey}&units=metric`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-
-        const weather = data.weather[0].description;
-        const temp = data.main.temp;
-        const windSpeed = data.wind.speed;
-        const humidity = data.main.humidity;
-
-        return { weather, temp, windSpeed, humidity };
-    } catch (err) {
-        console.error(`Error fetching data for ${beach.name}:`, err);
-        return null;
-    }
+function getIconFilename(condition) {
+  let cond = condition.toLowerCase().replace(/\s+/g, '-');
+  return `wi-${cond}.svg`;  // icons directly in main folder
 }
 
-function getVerdict(temp, wind) {
-    if (temp >= 22 && wind < 5) return "Perfect for a Swim 🏊‍♂️";
-    if (temp >= 15 && wind <= 10) return "Nice for a Walk 🚶‍♂️";
-    return "Horrible for a Walk 😬";
+// Wave height estimation (meters)
+function estimateWaveHeight(windSpeedMps) {
+  const windKnots = windSpeedMps * 1.94384;
+  return (0.016 * windKnots * windKnots).toFixed(2);
+}
+
+// Wave speed estimation (meters per second)
+function estimateWaveSpeed(windSpeedMps) {
+  return (1.5 * windSpeedMps).toFixed(2);
+}
+
+// Tide level estimation (meters) based on simple sine wave cycle (~12h)
+function estimateTideLevel() {
+  const now = new Date();
+  const hours = now.getUTCHours() + now.getUTCMinutes() / 60;
+  const tideAmplitude = 1.5;
+  const tideLevel = tideAmplitude * Math.sin((2 * Math.PI / 12) * (hours - 6));
+  return tideLevel.toFixed(2);
+}
+
+async function fetchBeachWeather(beach) {
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${beach.lat}&lon=${beach.lon}&appid=${API_KEY}&units=metric`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+
+    const mainCondition = data.weather[0].main;
+    const iconName = weatherIconMap[mainCondition] || 'sunny';
+
+    const waveHeight = estimateWaveHeight(data.wind.speed);
+    const waveSpeed = estimateWaveSpeed(data.wind.speed);
+    const tideLevel = estimateTideLevel();
+
+    return {
+      id: beach.id,
+      name: beach.name,
+      temp: Math.round(data.main.temp),
+      windSpeed: data.wind.speed.toFixed(1),
+      humidity: data.main.humidity,
+      condition: iconName,
+      description: data.weather[0].description,
+      waveHeight,
+      waveSpeed,
+      tideLevel
+    };
+  } catch (err) {
+    console.error(`Failed to fetch weather for ${beach.name}:`, err);
+    return {
+      id: beach.id,
+      name: beach.name,
+      temp: '--',
+      windSpeed: '--',
+      humidity: '--',
+      condition: 'sunny',
+      description: 'No data',
+      waveHeight: '--',
+      waveSpeed: '--',
+      tideLevel: '--'
+    };
+  }
+}
+
+function renderCityCards(cities) {
+  const container = document.getElementById('beachContainer');
+  container.innerHTML = '';
+
+  cities.forEach(city => {
+    const card = document.createElement('div');
+    card.className = 'beach-card';
+    card.tabIndex = 0;
+
+    card.innerHTML = `
+      <div class="city-header">
+        <h3 class="city-name">${city.name}</h3>
+        <img class="weather-icon" src="${getIconFilename(city.condition)}" alt="Weather icon for ${city.name}" />
+      </div>
+      <div class="city-details">
+        <p>Temperature: ${city.temp}°C</p>
+        <p>Wind Speed: ${city.windSpeed} m/s</p>
+      </div>
+    `;
+
+    card.addEventListener('click', () => showPopup(city));
+    card.addEventListener('keypress', e => {
+      if (e.key === 'Enter' || e.key === ' ') showPopup(city);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function showPopup(city) {
+  const popup = document.getElementById('popup');
+  document.getElementById('popupBeachName').textContent = city.name;
+
+  const popupIcon = document.getElementById('popupIcon');
+  popupIcon.src = getIconFilename(city.condition);
+  popupIcon.alt = `Weather icon for ${city.name}`;
+
+  document.getElementById('popupWeather').textContent = `Condition: ${city.description}`;
+  document.getElementById('popupWind').textContent = `Wind Speed: ${city.windSpeed} m/s`;
+  document.getElementById('popupHumidity').textContent = `Humidity: ${city.humidity}%`;
+  document.getElementById('popupWaveHeight').textContent = `Wave Height: ${city.waveHeight} m`;
+  document.getElementById('popupWaveSpeed').textContent = `Wave Speed: ${city.waveSpeed} m/s`;
+  document.getElementById('popupTideLevel').textContent = `Tide Level: ${city.tideLevel} m`;
+
+  let verdict = '';
+  if (city.windSpeed !== '--' && city.windSpeed > 7) {
+    verdict = 'Strong wind today. Be cautious!';
+  } else {
+    verdict = 'Good beach weather.';
+  }
+  document.getElementById('popupVerdict').textContent = verdict;
+
+  popup.classList.remove('hidden');
+  popup.focus();
+}
+
+function setupPopupClose() {
+  const popup = document.getElementById('popup');
+  const closeBtn = document.getElementById('closePopup');
+
+  closeBtn.addEventListener('click', () => {
+    popup.classList.add('hidden');
+  });
+
+  closeBtn.addEventListener('keypress', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      popup.classList.add('hidden');
+    }
+  });
+
+  popup.addEventListener('click', e => {
+    if (e.target === popup) {
+      popup.classList.add('hidden');
+    }
+  });
 }
 
 async function init() {
-    for (let beach of beaches) {
-        const info = await fetchWeather(beach);
-        const card = document.createElement("div");
-        card.className = "beach-card";
+  setupPopupClose();
 
-        if (!info) {
-            card.innerHTML = `
-                <h3>${beach.name}</h3>
-                <p>Data unavailable</p>
-            `;
-        } else {
-            card.innerHTML = `
-                <h3>${beach.name}</h3>
-                <p>${info.temp}°C</p>
-                <p>${info.weather}</p>
-            `;
+  const promises = beaches.map(fetchBeachWeather);
+  const citiesData = await Promise.all(promises);
 
-            card.addEventListener("click", () => {
-                popupBeachName.textContent = beach.name;
-                popupWeather.textContent = `Weather: ${info.weather}, Temp: ${info.temp}°C`;
-                popupWind.textContent = `Wind Speed: ${info.windSpeed} m/s`;
-                popupHumidity.textContent = `Humidity: ${info.humidity}%`;
-                popupVerdict.textContent = getVerdict(info.temp, info.windSpeed);
-                popup.classList.remove("hidden");
-            });
-        }
-
-        beachContainer.appendChild(card);
-    }
+  renderCityCards(citiesData);
 }
 
-closePopup.addEventListener("click", () => popup.classList.add("hidden"));
-popup.addEventListener("click", e => {
-    if (e.target === popup) popup.classList.add("hidden");
-});
-
-init();
+document.addEventListener('DOMContentLoaded', init);
