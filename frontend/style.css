@@ -1,0 +1,135 @@
+/* ---- Base / Theme ---- */
+:root{
+  --bg1: #eaf6ff;
+  --bg2: #ffffff;
+  --accent: #0077b6;
+  --accent-2: #00b4d8;
+  --card-shadow: rgba(0,118,182,0.12);
+  --glass: rgba(255,255,255,0.85);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter, "Poppins", "Segoe UI", system-ui, Arial; color:#033d63}
+body{
+  background: radial-gradient(circle at 20% 10%, #e1f5ff 0%, #ffffff 45%, #f6fbff 100%);
+  -webkit-font-smoothing:antialiased;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* Header */
+header{
+  padding:28px 18px;
+  background: linear-gradient(90deg,var(--accent-2),var(--accent));
+  color:white;
+  text-align:center;
+  box-shadow:0 6px 22px rgba(0,56,102,0.12);
+}
+.header-inner h1{margin:0;font-size:1.6rem;letter-spacing:0.6px}
+.header-inner p{margin:6px 0 0;font-weight:500;opacity:0.95}
+
+/* Main layout */
+main#content{flex:1;padding:28px 18px;}
+.cities-container{
+  display:grid;
+  grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+  gap:20px;
+  max-width:1200px;
+  margin:0 auto;
+}
+
+/* City Card */
+.city-card{
+  background:var(--glass);
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 10px 30px var(--card-shadow);
+  transition:transform .18s ease, box-shadow .18s ease;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  position:relative;
+  overflow:visible;
+}
+.city-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(0,118,182,0.18)}
+.city-top{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  justify-content:space-between;
+}
+.city-left{
+  display:flex;align-items:center;gap:12px;
+}
+.city-name{font-size:1.15rem;margin:0;color:#033d63;font-weight:700}
+.city-agg{font-size:0.95rem;color:#055979}
+
+/* aggregated icon */
+.city-icon{
+  font-size:38px;
+  color:var(--accent);
+  display:inline-block;
+  width:48px;height:48px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* small aggregated numbers */
+.city-stats{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-top:6px;
+}
+.stat-pill{
+  background:rgba(0,119,182,0.06);
+  padding:8px 10px;border-radius:10px;font-weight:600;color:#005f8a;font-size:0.95rem;
+  box-shadow:inset 0 -3px 6px rgba(0,0,0,0.02);
+}
+
+/* expand control */
+.expand-btn{
+  background:transparent;border:0;color:#0077b6;font-weight:700;font-size:0.9rem;cursor:pointer;
+  display:flex;gap:8px;align-items:center;padding:6px;
+}
+
+/* beach list (collapsed by default) */
+.beach-list{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+  transition:max-height .28s ease, opacity .2s ease;
+  overflow:hidden;
+}
+.beach-item{
+  display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.6);
+  cursor:pointer;border:1px solid rgba(2,22,40,0.03);
+}
+.beach-item:hover{transform:translateY(-3px)}
+.beach-item .small-icon{font-size:22px;color:#0077b6;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+.beach-meta{font-size:0.95rem;color:#053d57;font-weight:600}
+.beach-sub{font-size:0.85rem;color:#08607f;font-weight:500;opacity:0.9}
+
+/* Popup */
+.popup{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.48);
+  z-index:9999;backdrop-filter: blur(3px);
+}
+.popup.hidden{display:none}
+.popup-content{
+  width:360px;max-width:94vw;background:white;border-radius:14px;padding:18px 18px 20px;color:#033d63;
+  box-shadow:0 18px 50px rgba(1,63,110,0.18);
+}
+.close{position:absolute;right:14px;top:10px;background:#fff;border-radius:50%;border:0;width:36px;height:36px;font-size:20px;color:#0077b6;cursor:pointer}
+.popup-top{display:flex;gap:14px;align-items:center}
+.weather-icon-large{font-size:44px;color:var(--accent)}
+.popup-summary p{margin:4px 0;font-weight:600;color:#034b65}
+.popup-extra p{margin:8px 0;font-size:0.95rem;color:#05485f}
+.verdict{font-weight:700;margin-top:8px;color:#0b4f6f}
+
+/* small responsive */
+@media (max-width:640px){
+  .city-top{flex-direction:column;align-items:flex-start;gap:10px}
+  .city-stats{flex-wrap:wrap}
+  .city-card{padding:14px}
+}
